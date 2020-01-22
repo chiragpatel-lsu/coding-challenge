@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import {Redirect} from 'react-router-dom';
+import {authenticate, getUserProfile} from "../services/user";
 
 class Login extends Component {
     constructor(props) {
@@ -8,10 +9,11 @@ class Login extends Component {
         this.state = {
             username: '',
             password: '',
-            loggedIn: false
+            loggedIn: false,
+            error: false,
+            token: '',
+            gifs: []
         };
-
-        this.handleSubmit = this.handleSubmit.bind(this);
     }
 
     handleChange = e => {
@@ -19,24 +21,29 @@ class Login extends Component {
         this.setState({[name]: value});
     };
 
-    handleSubmit(e) {
+    handleSubmit = async e => {
         e.preventDefault();
 
         const {username, password} = this.state;
         if (username && password) {
-
-            this.setState({loggedIn: true});
+            const response = await authenticate({username, password});
+            if (!response.isValid) {
+                this.setState({error: true});
+            } else {
+                const user = getUserProfile({username, token: response.token});
+                this.setState({loggedIn: response.isValid, token: response.token, error: false, gifs: user.gifs});
+            }
+        } else {
+            this.setState({error: true});
         }
-    }
-
+    };
 
     render() {
-        const {username, password, loggedIn} = this.state;
-
+        const {username, password, loggedIn, token, error, gifs} = this.state;
         if (loggedIn) {
             return <Redirect to={{
-                pathname: '/welcome',
-                state: {username}
+                pathname: '/profile',
+                state: {username, token, gifs}
             }}/>
         }
 
@@ -48,7 +55,8 @@ class Login extends Component {
                     <label>Username</label>
                     <input type='text'
                            autoFocus={true}
-                           className='form-control'
+                           required
+                           className='form-control rounded-0'
                            placeholder='Enter username'
                            name="username"
                            value={username} onChange={this.handleChange}/>
@@ -57,14 +65,16 @@ class Login extends Component {
                 <div className='form-group'>
                     <label>Password</label>
                     <input type='password'
-                           className='form-control'
+                           required
+                           className='form-control rounded-0'
                            placeholder='Enter password'
                            value={password}
                            name="password"
                            onChange={this.handleChange}/>
                 </div>
 
-                <button type='submit' className='btn btn-primary btn-block'>Submit</button>
+                {error ? <div className="invalid text-right">Invalid username or password</div> : ''}
+                <button type='submit' className='rounded-0 btn btn-primary btn-block'>Submit</button>
                 <p className='register text-right'>
                     Not registered yet? <a href='/register'>Register</a>
                 </p>

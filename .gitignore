@@ -1,2 +1,21 @@
 node_modules
-/.idea/
+*.idea/
+
+*vendor/
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+
+npm-debug.log*
+/oauth/vendor/
